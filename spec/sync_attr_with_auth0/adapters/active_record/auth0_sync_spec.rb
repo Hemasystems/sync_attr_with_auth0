@@ -680,7 +680,7 @@ module SyncAttrWithAuth0
               before { subject.instance_variable_set(:@auth0_uid, 'auth0|user_id') }
 
               it "should update the user with the auth0 user id and return true" do
-                expect(subject).to receive(:update_columns).with uid: 'auth0|user_id'
+                expect(subject).to receive(:update_columns).with({uid: 'auth0|user_id'})
 
                 expect(subject.update_uid_and_picture_from_auth0).to eq(true)
                 expect(subject.instance_variable_get(:@auth0_uid)).to eq(nil)
@@ -699,7 +699,7 @@ module SyncAttrWithAuth0
               before { subject.instance_variable_set(:@auth0_picture, 'https://api.adorable.io/avatars/285/jane@example.com') }
 
               it "should update the user with the auth0 user id and return true" do
-                expect(subject).to receive(:update_columns).with picture: 'https://api.adorable.io/avatars/285/jane@example.com'
+                expect(subject).to receive(:update_columns).with({picture: 'https://api.adorable.io/avatars/285/jane@example.com'})
 
                 expect(subject.update_uid_and_picture_from_auth0).to eq(true)
                 expect(subject.instance_variable_get(:@auth0_picture)).to eq(nil)
