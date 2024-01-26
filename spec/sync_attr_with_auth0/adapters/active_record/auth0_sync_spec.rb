@@ -281,28 +281,50 @@ module SyncAttrWithAuth0
           end
         end # save_to_auth0
 
+        shared_examples 'picture update' do
+          context "when picture is in response" do
+            let(:mock_response) do
+              base_mock_response.merge \
+                'picture' => 'https://api.adorable.io/avatars/285/jane@example.com'
+            end
+
+            it "should update the user with the auth0 user id and return true" do
+              expect(subject).to receive(:update_columns).with(hash_including(picture: 'https://api.adorable.io/avatars/285/jane@example.com'))
+            end
+          end
+
+          context "when the instance variable is not set" do
+            it "should do nothing and return true" do
+              expect(subject).not_to receive(:update_columns).with(hash_including(picture: 'https://api.adorable.io/avatars/285/jane@example.com'))
+            end
+          end
+        end
 
         describe "#create_in_auth0" do
           let(:mock_params) { double(Object) }
-          let(:mock_config) { double(Object, email_attribute: :email, name_attribute: :name) }
-          let(:mock_response) do
+          let(:mock_config) { double(Object, email_attribute: :email, name_attribute: :name, auth0_uid_attribute: :uid, picture_attribute: :picture) }
+          let(:base_mock_response) do
             {
               'user_id' => 'uid'
             }
           end
+          let(:mock_response) { base_mock_response }
 
           before do
             allow(subject).to receive(:auth0_create_params).and_return(mock_params)
             allow(subject).to receive(:auth0_sync_configuration).and_return(mock_config)
             allow(subject).to receive(:name).and_return('John Doe')
+            expect(SyncAttrWithAuth0::Auth0).to receive(:create_user).with(mock_params, config: mock_config).and_return(mock_response)
           end
 
           it "should create the user in Auth0 and setup the uid for update locally" do
-            expect(SyncAttrWithAuth0::Auth0).to receive(:create_user).with(mock_params, config: mock_config).and_return(mock_response)
+            expect(subject).to receive(:update_columns).with({uid: 'uid'})
 
             subject.create_in_auth0
+          end
 
-            expect(subject.instance_variable_get(:@auth0_uid)).to eq('uid')
+          it_behaves_like 'picture update' do
+            after { subject.create_in_auth0 }
           end
         end # create_in_auth0
 
@@ -310,12 +332,13 @@ module SyncAttrWithAuth0
         describe "#update_in_auth0" do
           let(:user_uid) { 'param uid' }
           let(:mock_params) { double(Object) }
-          let(:mock_config) { double(Object, email_attribute: :email, name_attribute: :name) }
-          let(:mock_response) do
+          let(:mock_config) { double(Object, email_attribute: :email, name_attribute: :name, auth0_uid_attribute: :uid, picture_attribute: :picture) }
+          let(:base_mock_response) do
             {
               'user_id' => 'response uid'
             }
           end
+          let(:mock_response) { base_mock_response }
 
           before do
             allow(subject).to receive(:auth0_create_params).and_return(mock_params)
@@ -325,12 +348,17 @@ module SyncAttrWithAuth0
           end
 
           context "when the user is found in auth0" do
-            it "should update the user in Auth0 and setup the uid for update locally" do
+            before do
               expect(SyncAttrWithAuth0::Auth0).to receive(:patch_user).with('param uid', mock_params, config: mock_config).and_return(mock_response)
+            end
 
+            it "should update the user in Auth0 and setup the uid for update locally" do
+              expect(subject).to receive(:update_columns).with({uid: 'param uid'})
               subject.update_in_auth0(user_uid)
+            end
 
-              expect(subject.instance_variable_get(:@auth0_uid)).to eq('param uid')
+            it_behaves_like 'picture update' do
+              after { subject.update_in_auth0(user_uid) }
             end
           end
 
@@ -348,10 +376,9 @@ module SyncAttrWithAuth0
 
               it "should update the user in Auth0 and setup the uid for update locally" do
                 expect(SyncAttrWithAuth0::Auth0).to receive(:patch_user).with('found uid', mock_params, config: mock_config).and_return(mock_response)
+                expect(subject).to receive(:update_columns).with({uid: 'found uid'})
 
                 subject.update_in_auth0(user_uid)
-
-                expect(subject.instance_variable_get(:@auth0_uid)).to eq('found uid')
               end
             end
 
@@ -360,10 +387,9 @@ module SyncAttrWithAuth0
 
               it "should create the user in Auth0 instead" do
                 expect(SyncAttrWithAuth0::Auth0).to receive(:create_user).with(mock_params, config: mock_config).and_return(mock_response)
+                expect(subject).to receive(:update_columns).with({uid: 'response uid'})
 
                 subject.update_in_auth0(user_uid)
-
-                expect(subject.instance_variable_get(:@auth0_uid)).to eq('response uid')
               end
             end
           end
@@ -672,47 +698,6 @@ module SyncAttrWithAuth0
             expect(subject.auth0_update_params(mock_user_uid)).to eq(expected_response)
           end
         end # auth0_update_params
-
-
-        describe "#update_uid_and_picture_from_auth0" do
-          describe 'auth0_uid update' do
-            context "when the instance variable is set" do
-              before { subject.instance_variable_set(:@auth0_uid, 'auth0|user_id') }
-
-              it "should update the user with the auth0 user id and return true" do
-                expect(subject).to receive(:update_columns).with({uid: 'auth0|user_id'})
-
-                expect(subject.update_uid_and_picture_from_auth0).to eq(true)
-                expect(subject.instance_variable_get(:@auth0_uid)).to eq(nil)
-              end
-            end
-
-            context "when the instance variable is not set" do
-              it "should do nothing and return true" do
-                expect(subject.update_uid_and_picture_from_auth0).to eq(true)
-              end
-            end
-          end
-
-          describe 'picture update' do
-            context "when the instance variable is set" do
-              before { subject.instance_variable_set(:@auth0_picture, 'https://api.adorable.io/avatars/285/jane@example.com') }
-
-              it "should update the user with the auth0 user id and return true" do
-                expect(subject).to receive(:update_columns).with({picture: 'https://api.adorable.io/avatars/285/jane@example.com'})
-
-                expect(subject.update_uid_and_picture_from_auth0).to eq(true)
-                expect(subject.instance_variable_get(:@auth0_picture)).to eq(nil)
-              end
-            end
-
-            context "when the instance variable is not set" do
-              it "should do nothing and return true" do
-                expect(subject.update_uid_and_picture_from_auth0).to eq(true)
-              end
-            end
-          end
-        end # update_uid_and_picture_from_auth0
 
       end # describe Sync
 

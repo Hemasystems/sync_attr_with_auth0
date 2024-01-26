@@ -36,7 +36,6 @@ module SyncAttrWithAuth0
           after_validation :validate_email_with_auth0
           after_create :save_to_auth0_after_create
           after_update :save_to_auth0_after_update
-          after_commit :update_uid_and_picture_from_auth0
         end # sync_attr_with_auth0
 
       end # ClassMethods
