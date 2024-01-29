@@ -209,7 +209,7 @@ RSpec.describe SyncAttrWithAuth0::Auth0 do
 
     before do
       allow(SyncAttrWithAuth0).to receive(:configuration).and_return(mock_config)
-      allow(SyncAttrWithAuth0::Auth0).to receive(:create_auth0_client).with(config: mock_config).and_return(mock_client)
+      allow(SyncAttrWithAuth0::Auth0).to receive(:create_auth0_client).with({config: mock_config}).and_return(mock_client)
       allow(mock_client).to receive(:patch_user).with('uid', {}).and_return('response!')
     end
 

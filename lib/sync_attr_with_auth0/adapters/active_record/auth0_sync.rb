@@ -96,9 +96,10 @@ module SyncAttrWithAuth0
 
           response = SyncAttrWithAuth0::Auth0.create_user(params, config: auth0_sync_configuration)
 
-          # Update the record with the uid and picture after_commit
-          @auth0_uid = response['user_id']
-          @auth0_picture = response['picture']
+          # Update the record with the uid and picture
+          auth0_uid = response['user_id']
+          auth0_picture = response['picture']
+          update_uid_and_picture_from_auth0 auth0_uid, auth0_picture
         end # create_in_auth0
 
 
@@ -109,8 +110,9 @@ module SyncAttrWithAuth0
             response = SyncAttrWithAuth0::Auth0.patch_user(user_uid, auth0_update_params(user_uid), config: auth0_sync_configuration)
 
             # Update the record with the uid after_commit (in case it doesn't match what's on file).
-            @auth0_uid = user_uid
-            @auth0_picture = response['picture']
+            auth0_uid = user_uid
+            auth0_picture = response['picture']
+            update_uid_and_picture_from_auth0 auth0_uid, auth0_picture
           rescue ::Auth0::NotFound => e
             # For whatever reason, the passed in uid was invalid,
             # determine how to proceed.
@@ -125,9 +127,10 @@ module SyncAttrWithAuth0
               # and update the one on file.
               response = SyncAttrWithAuth0::Auth0.patch_user(found_user['user_id'], auth0_update_params(found_user['user_id']), config: auth0_sync_configuration)
 
-              # Update the record with the uid after_commit
-              @auth0_uid = found_user['user_id']
-              @auth0_picture = response['picture']
+              # Update the record with the uid
+              auth0_uid = found_user['user_id']
+              auth0_picture = response['picture']
+              update_uid_and_picture_from_auth0 auth0_uid, auth0_picture
             end
 
           rescue Exception => e
@@ -203,25 +206,20 @@ module SyncAttrWithAuth0
         end # auth0_update_params
 
 
-        def update_uid_and_picture_from_auth0
+        def update_uid_and_picture_from_auth0(auth0_uid, auth0_picture)
           data = {}
 
-          if @auth0_uid
+          if auth0_uid
             attr = auth0_sync_configuration.auth0_uid_attribute
-            data[attr] = @auth0_uid if respond_to?(attr) && @auth0_uid != public_send(attr)
+            data[attr] = auth0_uid if respond_to?(attr) && auth0_uid != public_send(attr)
           end
 
-          if @auth0_picture
+          if auth0_picture
             attr = auth0_sync_configuration.picture_attribute
-            data[attr] = @auth0_picture if respond_to?(attr) && @auth0_picture != public_send(attr)
+            data[attr] = auth0_picture if respond_to?(attr) && auth0_picture != public_send(attr)
           end
 
           update_columns data unless data.empty?
-
-          remove_instance_variable :@auth0_uid if defined? @auth0_uid
-          remove_instance_variable :@auth0_picture if defined? @auth0_picture
-
-          true # don't abort the callback chain
         end # update_uid_and_picture_from_auth0
 
       end
