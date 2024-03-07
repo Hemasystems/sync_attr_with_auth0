@@ -1,7 +1,14 @@
 # Changelog
 
+## 0.2.8
+* Updated JWT to use RS256 encoding instead of HS256.
+
+## 0.2.7
+* Updated dependencies.
+* Improved callbacks to avoid NULL Auth0 IDs.
+
 ## 0.2.6
-* Allow newer Auth0 library and jwt library
+* Allow newer Auth0 library and jwt library.
 
 ## 0.2.5
 * No Changes (version bump).
