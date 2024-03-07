@@ -20,7 +20,7 @@ RSpec.describe SyncAttrWithAuth0::Auth0 do
       expect(Time).to receive(:now).and_return(1)
       expect(UUIDTools::UUID).to receive(:random_create).and_return('uuid')
       expect(JWT::Base64).to receive(:url_decode).with('global client secret').and_return('decoded global client secret')
-      expect(JWT).to receive(:encode).with(mock_payload, 'decoded global client secret', 'HS256', { typ: 'JWT' }).and_return('jwt string')
+      expect(JWT).to receive(:encode).with(mock_payload, 'decoded global client secret', 'RS256', { typ: 'JWT' }).and_return('jwt string')
     end
 
     it "should create and return a java web token for auth0" do

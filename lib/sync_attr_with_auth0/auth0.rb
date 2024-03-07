@@ -17,7 +17,7 @@ module SyncAttrWithAuth0
         'jti' => UUIDTools::UUID.random_create.to_s
       }
 
-      jwt = JWT.encode(payload, JWT::Base64.url_decode(global_client_secret), 'HS256', { typ: 'JWT' })
+      jwt = JWT.encode(payload, JWT::Base64.url_decode(global_client_secret), 'RS256', { typ: 'JWT' })
 
       return jwt
     end # ::create_auth0_jwt
