@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.9
+* Ended support for using v1 of the Auth0 Management API (the Auth0 gem had long-ago ended support for it).
+* Updated the creation of the Auth0 client to have it create the JWT itself instead of this gem creating it. This will
+require ensuring the application in Auth0 is authorized to access the
+Management API with whatever scopes you need authorized. This gem requires
+the ability to create, read, and update users.
+
 ## 0.2.8
 * Updated JWT to use RS256 encoding instead of HS256.
 
